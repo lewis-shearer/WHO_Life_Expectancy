@@ -1,92 +1,54 @@
-Life Expectancy Prediction Using Machine Learning
-=================================================
+# WHO life expectancy prediction
 
-This project aims to predict the life expectancy of countries using various machine learning models. The dataset utilized in this project comes from the World Health Organization (WHO), and the focus is to compare the performance of different models to see which one yields the best results.
+I tried to predict a country's life expectancy in a given year from the health and economic indicators in the WHO life expectancy dataset. I started with a deep neural network in TensorFlow/Keras, which did not train well, and then switched to scikit-learn's linear regression, random forest and gradient boosting models, which did much better.
 
-Overview
---------
+![Predicted against true life expectancy for the three scikit-learn models](output.png)
 
-The main goal of this project was to predict life expectancy based on a variety of factors such as income, education, healthcare, and other socio-economic factors using machine learning algorithms. Initially, I experimented with deep neural networks (DNN), but faced challenges with the model performance. Afterward, I explored other models like Linear Regression, Random Forests, and Gradient Boosting to find more reliable predictions.
+## How it works
 
-### Key Steps
+1. Load `Life Expectancy Data.csv` (2,938 rows, 22 columns, one row per country per year).
+2. Drop every row with a missing value, which leaves 1,649 rows, and shuffle.
+3. Use `Life expectancy` as the target and the other 21 columns as features. `Country` and `Status` are one-hot encoded with the first category dropped, giving 152 feature columns.
+4. Split 80/20 into training and test sets with `train_test_split`.
+5. Train a Keras `Sequential` network: a 154-unit dense layer, a `Normalization` layer, three dense layers of 10,000 units, then 1,000, 100 and 10 units (all ReLU) and one output. Loss is mean absolute error (MAE) with the Adam optimiser.
+6. Train `LinearRegression`, `RandomForestRegressor` and `GradientBoostingRegressor` from scikit-learn with default settings on the same split, and report MSE, MAE and R² on the test set.
 
-1.  Dataset: The project uses the WHO dataset, which contains various health and socio-economic factors for different countries, including life expectancy, income levels, literacy rates, etc.
+## Results
 
-2.  Modeling Approach:
+All figures are on the 20% test split, from the saved notebook outputs. MAE is in years.
 
-    -   Deep Neural Network: I began by building a deep neural network, but it consistently got stuck at a validation loss of around 6.5. Although this was promising, the model did not reach a satisfactory performance.
-    -   Linear Regression (via scikit-learn): I then visualized the data and observed a linear relationship between the features and the target variable (life expectancy). Using the pre-built `LinearRegression` function from scikit-learn, I achieved a mean absolute error (MAE) of 1.07.
-    -   Random Forest and Gradient Boosting: I further experimented with scikit-learn tools, such as Random Forests and Gradient Boosting Regressor, but the results were quite similar to the Linear Regression model.
-3.  Results and Graphs: After evaluating the models, I visualized the predictions of each model and compared them to the actual values, which provided insights into their accuracy and general performance.
+| Model | MAE | MSE | R² |
+|---|---|---|---|
+| Deep neural network | 6.96 | not measured | not measured |
+| Random forest | 1.07 | 2.90 | 0.963 |
+| Linear regression | 1.10 | 2.77 | 0.964 |
+| Gradient boosting | 1.41 | 4.05 | 0.948 |
 
-* * * * *
+The neural network never got going. The first epoch had a training loss of about 1.4 million, after which the loss sat at about 69 for every epoch shown, which is roughly what you get by predicting zero for everyone. Each epoch took two to four minutes on my machine, so I stopped it partway through the fourth epoch. The test set evaluation saved in the notebook gives an MAE of 6.96 years, but it comes from a later run whose training output was not saved. Looking back, the input features were never scaled (population and GDP are in the millions) and the `Normalization` layer was never adapted to the data, which probably explains a lot of this.
 
-Models Used
------------
+The three scikit-learn models were all close, with errors of about a year. Plain linear regression did almost as well as the random forest.
 
--   Deep Neural Network (DNN): A multi-layer neural network built using TensorFlow/Keras. Despite its potential, the model struggled to improve beyond a `val_loss` of 6.5.
+In the notebook the first evaluation output is headed "Linear Regression" even though it was called on the random forest predictions (`y_pred_1`). The plot legend has the same mix-up: the blue points labelled "Linear regression" are the random forest and the red points labelled "Forest" are linear regression.
 
--   Linear Regression: A simple but effective model from scikit-learn that produced a MAE of 1.07.
+## Repository layout
 
--   Random Forest Regressor: Another scikit-learn model that uses multiple decision trees to improve predictions.
+| Path | What it is |
+|---|---|
+| `Life_expectancy.ipynb` | Data preparation, the neural network and the scikit-learn models |
+| `Life Expectancy Data.csv` | The WHO life expectancy dataset the notebook reads |
+| `output.png` | Predicted against true values for the three scikit-learn models |
 
--   Gradient Boosting Regressor: A powerful ensemble model known for building a strong predictive model from weak learners from scikit-learn.
+## Running it
 
-* * * * *
+The notebook needs pandas, NumPy, scikit-learn, TensorFlow, Matplotlib and seaborn. There is no requirements file.
 
-Results
--------
+```
+pip install pandas numpy scikit-learn tensorflow matplotlib seaborn
+jupyter notebook Life_expectancy.ipynb
+```
 
--   Linear Regression (sklearn): MAE = 1.07
--   Random Forest Regressor: Similar performance to Linear Regression
--   Gradient Boosting Regressor: Comparable results to Random Forest and Linear Regression
+Run it from the repository folder so it can find the CSV. The neural network cell is set to 2,500 epochs and is very slow on a CPU, so you may want to lower that or skip the cell.
 
-The predictions from these models were plotted to visually compare them with the actual values, helping to confirm that the Linear Regression model performed the best.
-![output](https://github.com/user-attachments/assets/6dec6694-0db0-4463-b911-6bf6bff02802)
+## Limitations
 
-
-* * * * *
-
-Challenges
-----------
-
--   Deep Neural Network Issues: Initially, I focused on building a deep neural network, but encountered performance issues where the validation loss plateaued around 6.5. Despite trying various hyperparameters, I was unable to significantly improve the results.
-
--   Model Convergence: Although Linear Regression and ensemble models performed better, it was challenging to further improve performance beyond a certain point.
-
-* * * * *
-
-Future Work
------------
-
--   Hyperparameter Tuning: I plan to further explore the hyperparameter tuning for the DNN to see if it can be optimized for better performance.
-
--   Advanced Ensemble Methods: Investigating more advanced ensemble models, such as XGBoost or LightGBM, could lead to improved results.
-
--   Feature Engineering: Additional data preprocessing and feature engineering could be explored to improve model performance.
-
-* * * * *
-
-Technologies Used
------------------
-
--   Python
--   TensorFlow/Keras for deep neural networks
--   scikit-learn for Linear Regression, Random Forests, and Gradient Boosting
--   Matplotlib and Seaborn for data visualization
-
-* * * * *
-
-
-Conclusion
-----------
-
-The project demonstrates the comparison of several machine learning models for life expectancy prediction. While the deep neural network showed promise, simpler models like Linear Regression performed surprisingly well, with an MAE of 1.07. Further work can be done to explore more advanced models and fine-tune them to improve prediction accuracy. Also, in the future I will try avoid using these prebuilt models as it's taking away from my learning, instaed I will persevere with hyperparameter tuning and model experimenting.
-
-* * * * *
-
-### 🚀 Feel free to contribute or open issues if you have any questions or suggestions! 🎉
-
-* * * * *
-
-Let me know if you need any more details or modifications!
+No random seed is set for the shuffle or the split, so numbers will change slightly on each run. Because `Country` is a feature and rows are split at random, the same country appears in both the training and test sets for different years, which makes the test easier than predicting for an unseen country. An `EarlyStopping` callback is defined but never passed to `fit`.
